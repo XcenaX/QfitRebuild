@@ -1,0 +1,101 @@
+<link rel="stylesheet" href="{%static 'css/this.css'%}">
+	
+<div class="wrap">
+    <div class="content-title">
+        История посещений
+    </div>
+    <div class="content-under-title">
+        <div class="name">{{current_company.name}}</div>
+        <a href="/api/download_excel/{{current_company._id}}" download class="download-excel"></a>        
+    </div>
+    <div class="scrollable">
+        <table id="table">
+            <tr class="head">
+            <th>Телефон</th>
+            <th>Имя</th>
+            <th>Дата брони</th>
+            <th>Время старта</th>
+            <th>Время окончания</th>
+            <th>Кол-во минут</th>
+            <th>Оплата</th>
+            </tr>
+            {{#unless histories}}
+                <tr>
+                    <td colspan="7" id="empty_tr">В данный момент никто не посещал занятия</td>
+                </tr>
+            {{/unless}}     
+            {{#each histories }}
+                <tr id="history{{this.id}}">
+                    <td>{{this.user.phone}}</td>
+                    <td>{{this.user.name}}</td>
+                    <td>{{formatDate this.start_time 'Y-m-d'}}</td>
+                    <td>{{formatDate this.start_time 'H:i'}}</td>
+                    <td>{{formatDate this.end_time 'H:i'}}</td>
+                    <td>{{this.minutes}} минуты</td>
+                    <td>{{this.bill}} тг</td>
+                </tr>
+            {{/each}}                   
+        </table>
+    </div>
+</div>
+    
+
+<script language="javascript">
+    var ws_url = 'wss://' + window.location.host + '/ws/timers/';
+    var ticksSocket = new WebSocket(ws_url);
+
+    ticksSocket.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+        if({{current_company._id}} == data["company_id"]){
+            if(data["new_history"] != null){
+                trs = $("tr");
+                empty_tr = $("#empty_tr")[0];
+                if(trs.length == 2 && empty_tr != null){
+                    trs[1].remove();
+                }
+                const tr = document.createElement('tr');
+
+                tr.id = 'history' + data["history_id"];
+                tr.innerHTML = `
+
+                <td>`+data["phone"]+`</td>
+                <td>`+data["start_time"].slice(0, -3)+`</td>
+                <td>`+data["end_time"].slice(0, -3)+`</td>
+                <td>`+data["minutes"]+` минуты</td>
+                <td>`+data["bill"]+` тг</td>
+                `;
+
+                document.getElementById('table').appendChild(tr);
+            }
+        }
+        
+        // do whatever required with received data ...
+    };
+    ticksSocket.onerror = function(event) {
+        var data = JSON.parse(event.data);
+        console.log('data', data);
+        
+    };
+</script>
+<script>
+    function download_excel(){
+        $.ajax({
+            url: "/api/download_excel/", 
+            type: "POST",
+            data:{
+                "company": {{current_company._id}}
+            },                
+            success: function(data){
+                if(data["error"]){
+                    console.log(data["error"]);
+                }
+                else{
+                    var static_url = data["url"];
+                    $("#download-url")[0].href = static_url;
+                    $("#download-url")[0].click();
+                }                    
+            }
+        });
+    }
+</script>
+

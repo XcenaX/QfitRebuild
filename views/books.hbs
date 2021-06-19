@@ -1,0 +1,123 @@
+<link rel="stylesheet" href="/css/book.css">
+
+
+<div class="wrap">
+    <div class="content-title">
+        Брони
+    </div>
+    <div class="content-under-title">
+        {{current_company.name}}
+    </div>
+    <div class="scrollable">
+        <table id="table_current">
+            <tr class="head">
+                <th>Телефон</th>
+                <th>Имя</th>
+                <th>Дата брони</th>
+                <th>Время брони</th>
+                <th>Статус</th>
+            </tr>
+            {{#unless books}}
+                <tr id="no_book">
+                    <td colspan="5">В данный момент нет броней!</td>
+                </tr>
+            {{/unless}}
+            {{#each books }}
+                <tr id="current{{this.id}}">
+                    <td>{{this.user.phone}}</td>
+                    <td>{{this.user.name}}</td>
+                    <td>{{formatDate this.book_date 'Y-m-d'}}</td>
+                    <td>{{formatDate this.start_time 'H:i'}} - {{formatDate this.end_time 'H:i'}}</td>
+                    
+                    <td>
+                        <button id="decline_{{this.id}}" class="decline_book" onclick="decline(this)">Отклонить</button>
+                    </td>
+                </tr>
+            {{/each}}            
+        </table>
+    </div>          
+</div>
+
+
+
+<script language="javascript">
+    var ws_url = 'wss://' + window.location.host + '/ws/timers/';
+    var ticksSocket = new WebSocket(ws_url);
+
+    ticksSocket.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+        if({{current_company.id}} == data["company_id"]){
+            if(data["decline_book"] != null){
+                tr = $("#current"+ data["timer_id"]);
+                tr.remove();
+                if($("#table_current tr").length == 1){
+                    const empty_tr = document.createElement("tr");
+                    empty_tr.id = "no_bbok";
+                    empty_tr.innerHTML = `<td colspan="5">В данный момент нет броней!</td>`;
+                    document.getElementById('table_current').appendChild(empty_tr);
+                }
+            }
+            
+            if(data["new_book"] != null){
+                if($("#no_book")[0] != null){
+                    empty_tr = $("#no_book")[0];
+                    empty_tr.remove();
+                }
+                time = data["timer_start"]+" - "+data["timer_end"] + " " + data["timer_day"];
+                const tr = document.createElement('tr');
+                tr.id = "current"+ data["timer_id"];
+                tr.innerHTML = `
+                <td>`+data["timer_user"]+`</td>
+                <td>`+data["timer_user_name"]+`</td>
+                <td>`+time+`</td>
+                
+                <td>
+                    <button id="decline_`+data["timer_id"]+`" class="decline_book" onclick="decline(this)">Отклонить</button>
+                </td>
+                `;
+
+                document.getElementById('table_current').appendChild(tr);
+
+                
+            }
+            if(data["book_expired"] != null){
+                tr = $("#current"+data["timer_id"]);
+                tr2 = $("#accepted"+data["timer_id"]);
+
+                tr.remove()
+                tr2.remove()
+            }
+        }
+        
+        // do whatever required with received data ...
+    };
+    ticksSocket.onerror = function(event) {
+        var data = JSON.parse(event.data);
+        console.log('data', data);
+        
+    };
+</script>
+<script language="javascript">
+    function accept(button){
+        token = get_token();
+        var timer_id = parseInt(button.id.split("_")[1])
+        $.ajax({
+            url: "/api/accept_book/", 
+            type: "POST",
+            headers: {"Authorization": "Token "+token},
+            data: {"timer_id": timer_id}
+        });
+    }
+    function decline(button){
+        token = get_token();
+        var timer_id = parseInt(button.id.split("_")[1])
+        $.ajax({
+            url: "/api/decline_book/", 
+            type: "POST",
+            headers: {"Authorization": "Token "+token},
+            data: {"timer_id": timer_id}
+        });
+    }
+</script>
+
+

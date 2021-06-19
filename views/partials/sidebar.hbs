@@ -1,0 +1,30 @@
+<div class="bg_image1 hide-on-mobile"></div>
+<div class="bg_image2 hide-on-mobile"></div>
+<div class="sidebar hide-on-mobile">
+        <div class="logo"></div>
+        <div class="sidebar-option-menu">
+            <div class="sidebar-option {{#if mainpage}}active{{/if}}">
+                <a href="/admin-panel/">Главная</a>
+            </div>
+            <div class="sidebar-option {{#if bookspage}}active{{/if}}">
+                <a href="/admin-panel/books">Брони</a>
+            </div>
+            <div class="sidebar-option {{#if settingspage}}active{{/if}}">
+                <a href="/admin-panel/settings">Настройки клуба</a>
+            </div>
+            <div class="sidebar-option {{#if historypage}}active{{/if}}">
+                <a href="/admin-panel/history">История</a>
+            </div>
+            <div class="sidebar-option {{#if supportpage}}active{{/if}}">
+                <a href="/admin-panel/support">Помощь и связь</a>
+            </div>
+            
+            <div class="sidebar-option bottom">
+                <form action="/admin-panel/logout" method="POST">
+                    <input name="_csrf" type="hidden" value="{{csrfToken}}">
+                    <button type="submit">Выйти</button>    
+                </form>
+            </div>
+        </div>
+        
+</div>

@@ -1,0 +1,45 @@
+<head>
+    <script src="/js/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/alertify/alertify.min.css">
+    <link rel="stylesheet" type="text/css" href="/fonts/montserrat_family.css">
+    <link rel="stylesheet" type="text/css" href="/css/alertify/themes/default.min.css">
+    <link rel="shortcut icon" href="/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="/css/root.css">
+    <script src="/js/alertify.js"></script>
+    <script src="/js/functions.js"></script>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <title>Qfit Admin</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/sidebar.css" />
+    
+    <style>
+        html{
+            max-width: 1920px;
+            min-width: 1240px;
+            margin: auto;
+        }
+    </style>
+</head>
+<div class="mobile-alert">
+    <div class="mobile-title">Версия для телефона не доступна!</div>
+</div>
+<body>
+    {{>sidebar}}
+    <div class="content hide-on-mobile">
+        <div class="header">
+            <div class="user-block">
+                <div class="user-block-title-block">
+                    <div class="up">{{current_user.username}}</div>
+                    <!-- <div class="down">Настройки</div> -->
+                </div>
+                <img class="user-block-image-block" src="/img/user.svg"/>
+                    
+                
+            </div>
+        </div>
+        {{{body}}}
+    </div>
+</body>
