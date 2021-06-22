@@ -12,8 +12,7 @@ exports.getLogin = (req, res, next) => {
 exports.postSignUp = (req, res, next) => {  
     var data = req.body;
     //
-    AdminUser.findOne({username: data.username}).then(user => {
-        console.log(user);
+    AdminUser.findOne({username: data.username}).then(user => {        
         if(user){
             return res.json({
                 error: "Такой пользователь уже существует!",
@@ -27,11 +26,12 @@ exports.postSignUp = (req, res, next) => {
             company: data.company,
             username: data.username,
             password: hashedPassword
-        });
-        console.log(user);
+        });        
         return user.save();        
     }).then(result => {
         res.redirect("/admin-panel/login");
+    }).catch(err => {
+        console.log(err);
     });      
 }
 
@@ -60,7 +60,7 @@ exports.postLogin = (req, res, next) => {
                 console.log(err);
             })
         }
-    });      
+    });  
 }
 
 exports.postLogout = (req, res, next) => {  

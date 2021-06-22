@@ -8,6 +8,8 @@ let handlebars  = require('express-handlebars');
 const csrf = require("csurf");
 const moment = require("moment");
 
+const config = require("./utils/config");
+
 const errorController = require("./controllers/error");
 const currentTrains = require("./routes/main/current_trains");
 const books = require("./routes/main/books");
@@ -15,26 +17,20 @@ const history = require("./routes/main/history");
 const settings = require("./routes/main/settings");
 const support = require("./routes/main/support");
 const login = require("./routes/main/login");
-//
-const usersApi = require("./routes/api/users");
+const email = require("./routes/main/email");
 
-// Потом убрать в .env
-const MONGO_USER = "XcenaX";
-const MONGO_PASSWORD = "12345";
-const MONGO_DATABASE = "qfitdb";
-const MONGODB_URI = "mongodb+srv://"+MONGO_USER+":"+MONGO_PASSWORD+"@qfitdb.qp1an.mongodb.net/"+MONGO_DATABASE+"?w=majority";
-// Потом убрать в .env
+const usersApi = require("./routes/api/users");
 
 const app = express();
 const store = MongoDBStore({
-    uri: MONGODB_URI,
+    uri: config.MONGODB_URI,
     collections: "sessions"
 });
 
 const csrfProtection = csrf();
 
 app.set('views', path.join(__dirname, '/views'));
-app.engine('hbs', handlebars({
+app.engine('hbs', handlebars({ // Функции для теплейтов
     extname: 'hbs',
     layoutsDir: path.join(__dirname, 'views', "layouts"),
     defaultLayout: 'base',  
@@ -90,28 +86,37 @@ app.engine('hbs', handlebars({
 }));
 app.set('view engine', 'hbs');
 
-// handlebars = handlebars.create({
-    
-// });
 
 app.use(express.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
+app.use((req, res, next) => { // Настройка CORS для апишки
+    const allowedOrigins = ['https://qfit.kz', 'http://localhost:3000'];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', true);
+    return next();
+});
+
+app.use(session({ // Настройка сессии
     secret: "test", // Потом поставить норм строку
     resave: false,
     saveUninitialized: false,
     store: store,
 }));
 
-app.use(csrfProtection);
+app.use(csrfProtection); // csrf защита
 
 app.use((req, res, next) => {
     req.handlebars = handlebars;
     next();
 });
 
-app.use(function(req, res, next) {
+app.use(function(req, res, next) { // Ограничение доступа к админке
     if (req.session.current_user == null && req.path !== "/admin-panel/login" && req.path !== "/admin-panel/register"){
         res.redirect('/admin-panel/login');
     }else if(req.session.current_user != null && req.path === "/admin-panel/login"){
@@ -124,7 +129,7 @@ app.use(function(req, res, next) {
     }
 });
 
-app.use((req, res, next) => {
+app.use((req, res, next) => { // Передача в каждый запрос сессии и csrf
     res.locals.current_user = req.session.current_user;
     res.locals.current_company = req.session.current_company;
     res.locals.csrfToken = req.csrfToken();
@@ -138,6 +143,7 @@ app.use("/admin-panel", settings);
 app.use("/admin-panel", support);
 app.use("/admin-panel", history);
 app.use("/admin-panel", login);
+app.use("/admin-panel", email);
 
 // Api urls
 app.use("/api", usersApi);
@@ -145,7 +151,8 @@ app.use("/api", usersApi);
 // Not found
 app.use(errorController.get404);
 
-mongoose.connect(MONGODB_URI, { useNewUrlParser: true , useUnifiedTopology: true}).then(result  => {
+// MongoDB connect
+mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true , useUnifiedTopology: true}).then(result  => {
     app.listen(3000);
 }).catch(err => {
     console.log(err);    
